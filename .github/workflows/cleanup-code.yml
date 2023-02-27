@@ -1,0 +1,38 @@
+name: Cleanup Code
+
+on:
+  workflow_dispatch
+
+env:
+  DOTNET_VERSION: '7.0.x'
+
+jobs:
+  cleanup-code:
+    runs-on: windows-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Setup DotNet ${{ env.DOTNET_VERSION }} Environment
+        uses: actions/setup-dotnet@v3
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+
+      - name: Run dotnet format
+        run: dotnet format BlazorFormatDemo.sln
+
+      - name: Install CleanupCode
+        run: dotnet tool install jetbrains.resharper.globaltools --version 2022.3.2 --tool-path c:\dotnet-tools
+
+      - name: Run CleanupCode
+        run: 'c:\dotnet-tools\jb cleanupcode BlazorFormatDemo.sln --include="**/*.razor;**/*.html;**/*.css;**/*.js" --profile="Built-in: Full Cleanup"'
+
+      - name: Create Pull Request
+        uses: peter-evans/create-pull-request@v4
+        with:
+          token: ${{ secrets.PAT }}
+          branch: cleanup-code
+          commit-message: Cleanup Code
+          title: 'Cleanup Code'
+          body: >
+            This PR is created by cleanup-code.yml GitHub Actions.
